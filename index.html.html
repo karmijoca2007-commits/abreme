@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Me podrias dar una chance y tambien perdonarme?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        body {
+            background-color: #ffe6e8;
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px;
+        }
+
+        .tenor-gif-embed {
+            display: flex;
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn {
+            display: flex;
+            gap: 25px;
+        }
+
+        .btn button, .btn a {
+            text-decoration: none;
+            color: #333;
+            background: #fff;
+            padding: 10px 25px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn button:hover, .btn a:hover {
+            transform: scale(1.05);
+        }
+
+        #btnNo.movil {
+            position: absolute;
+            font-weight: bolder;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- GIF cambiante -->
+        <div id="gifContainer" class="tenor-gif-embed">
+            <iframe id="gifIframe" src="https://tenor.com/bzxn5Z1sYXm.gif" frameborder="0" width="100%" height="100%" allowfullscreen></iframe>
+        </div>
+
+        <!-- Título cambiante -->
+        <h1 id="titulo">¿Me podrias dar una chance y tambien perdonarme? 💕</h1>
+
+        <!-- Botones -->
+        <div class="btn" id="botones">
+            <button id="btnSi">Sí</button>
+            <button id="btnNo">No</button>
+        </div>
+    </div>
+
+    <script>
+        const titulo = document.getElementById("titulo");
+        const gifIframe = document.getElementById("gifIframe");
+        const btnSi = document.getElementById("btnSi");
+        const btnNo = document.getElementById("btnNo");
+        const botones = document.getElementById("botones");
+
+        // GIFs para cada estado
+        const gifs = {
+            inicio: "https://tenor.com/cusMWUJlmBs.gif",
+            duda1: "https://tenor.com/embed/22050818",
+            duda2: "https://tenor.com/embed/22050818",
+            escape: "https://tenor.com/embed/21682852",
+            exito: "https://tenor.com/embed/22885016"
+        };
+
+        let paso = 0;
+
+        // Acción al hacer clic en "Sí"
+        btnSi.addEventListener("click", () => {
+            gifIframe.src = gifs.exito;
+            titulo.textContent = "Jeje, ¡sabía que dirías que sí. Graciaas,prometo que no te arrepentiras! 🥰";
+            botones.style.display = "none"; // Oculta los botones
+        });
+
+        // Acción al hacer clic en "No"
+        btnNo.addEventListener("click", () => {
+            paso++;
+
+            if (paso === 1) {
+                titulo.textContent = "¿Estás segura Sofi? Piénsalo bien te lo suplicooo... 🥺";
+                gifIframe.src = gifs.duda1;
+            } else if (paso === 2) {
+                titulo.textContent = "Porfii Sofii ya no seas mala conmigoo.Mira que te va a encantar... 🥺";
+                gifIframe.src = gifs.duda2;
+            } else if (paso >= 3) {
+                titulo.textContent = "¡Serás mía a las buenas o a las malas Sofiii, JIJIJIJA y mas 1000 de laura para ti! 😈";
+                gifIframe.src = gifs.escape;
+                btnNo.classList.add("movil");
+            }
+        });
+
+        // Hacer que el botón "No" se mueva cuando entra en el modo escurridizo
+        function moverAleatoriamente(btn) {
+            const margin = 10;
+            const x = Math.floor(Math.random() * (90 - margin)) + margin;
+            const y = Math.floor(Math.random() * (90 - margin)) + margin;
+            btn.style.top = y + "%";
+            btn.style.left = x + "%";
+        }
+
+        btnNo.addEventListener("mouseenter", (e) => {
+            if (paso >= 3) {
+                moverAleatoriamente(e.target);
+            }
+        });
+    </script>
+
+</body>
+</html>

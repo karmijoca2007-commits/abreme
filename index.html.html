@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Corazón</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      
+      /* Imagen de fondo de la página */
+      background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('monos.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* Contenedor del Corazón */
+    .heart-wrapper {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      filter: drop-shadow(0 0 25px rgba(255, 75, 110, 0.6));
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    /* Dibujo del corazón */
+    .heart-shape {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(45deg, #ff2a5f, #ff758c);
+      transform: rotate(-45deg);
+      border-radius: 10px;
+    }
+
+    .heart-shape::before,
+    .heart-shape::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: inherit;
+      border-radius: 50%;
+    }
+
+    .heart-shape::before {
+      top: -100px;
+      left: 0;
+    }
+
+    .heart-shape::after {
+      left: 100px;
+      top: 0;
+    }
+
+    /* Contenido dentro del corazón */
+    .heart-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 200px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .editable-text {
+      outline: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      word-wrap: break-word;
+    }
+
+    .editable-text:focus {
+      border-bottom: 2px dashed rgba(255, 255, 255, 0.7);
+    }
+
+    /* Botón de la carta */
+    .letter-btn {
+      background: #ffffff;
+      color: #ff2a5f;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .letter-btn:hover {
+      transform: scale(1.08);
+      background-color: #fff0f3;
+    }
+
+    /* Modal / Fondo oscuro al abrir carta */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ==========================================
+       CONFIGURACIÓN DE LA CARTA (PROGRAMADOR)
+    ========================================== */
+    .letter-card {
+      /* CAMBIA ESTOS VALORES A TU GUSTO: */
+      background-color: #fffbfb; /* Color del fondo de la carta */
+      color: #2c2c2c;            /* Color del texto del contenido */
+      border: 2px solid #ffe6eb;  /* Color del borde */
+      
+      width: 100%;
+      max-width: 1000px;
+      padding: 30px 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .letter-card h2 {
+      color: #ff2a5f;            /* Color del título */
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+
+    .letter-body {
+      font-size: 1rem;
+      line-height: 1.6;
+      outline: none;
+      min-height: 80px;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: #ff2a5f;        /* Color del botón cerrar */
+      color: #ffffff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #e02352;
+      transform: scale(1.05);
+    }
+
+    /* Animación de latido */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.08); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.05); }
+      70% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="heart-wrapper">
+    <div class="heart-shape"></div>
+    <div class="heart-content">
+      <div class="editable-text" contenteditable="true" spellcheck="false">
+        Para ti ❤️👀
+      </div>
+      
+      <!-- Botón para abrir la carta -->
+      <button class="letter-btn" onclick="openLetter()">Leer Carta ✉️</button>
+    </div>
+  </div>
+
+  <!-- Ventana de la carta de amor -->
+  <div class="modal-overlay" id="letterModal">
+    <div class="letter-card">
+      <h2>💌 Mi querida Sofia</h2>
+      <div class="letter-body" contenteditable="true" spellcheck="false">
+      <br>Para Sofía,
+
+Hola linda por favor  lee mi carta porque que desde qye(me di cuenta que lo puse mal, pero asi lo dejo para que sepas que no use tanta IA y dejes la envidia) llegaste a mi vida, la idea de un futuro dejó de ser un simple pensamiento y se convirtió en una meta que me ilusiona todos los días. Quiero que seas mi mujer, la persona con la que pueda construir un camino sólido, paso a paso, aun a pesar de las dificultades de la vida.
+
+Quiero estar ahí para compartir miles de momentos contigo, desde los dias más grandes hasta los días malos. Me imagino llevándote a recorrer muchos lugares, descubriendo rincones nuevos juntos, pero sobre todo, siendo ese lugar seguro al que siempre puedas volver. En tus momentos difíciles, quiero ser tu apoyo, estar ahí para ayudarte a resolver cualquier problema que se presente y recordarte que nunca más vas a tener que cargar nada sola.
+
+Prepárate para escuchar miles de cosas cursis, porque nunca me voy a cansar de decirte lo mucho que te amo y lo importante que eres para mí, porque desde el primer dia que me enamoraste yo no puedo dejar de pensar en ti Princesa Sofi. porque a pesar de la distancia que nos puede separar, yo mantengo mi fe en que no sera impedimento para amarnos y expresarte todo lo que te amo y todo lo que estoy dispuesto a sacrificar por ti🫰
+
+Lo más bonito de todo este proceso al hacer esta página web fue darme cuenta de algo increíble: mientras trabajaba en cada detalle, volví a enamorarme de ti una vez más. Gracias por ser mi inspiración y por hacer que valga la pena cada segundo.
+ME DEJAS SER TU NOVIO #1?
+Con todo mi amor,
+Kevin el admirador #1 de la Princesa Sofia<br>
+        
+      </div>
+
+      <button class="close-btn" onclick="closeLetter()">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    function openLetter() {
+      document.getElementById('letterModal').classList.add('active');
+    }
+
+    function closeLetter() {
+      document.getElementById('letterModal').classList.remove('active');
+    }
+  </script>
+
+</body>
+</html>

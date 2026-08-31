@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Partido de Voleibol - Carta para Sofía</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .controls-panel {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        select, button, label.file-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            background: #e94560;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        select:hover, button:hover, label.file-btn:hover {
+            background: #ff6b81;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Banner de animación de punto */
+        #point-banner {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(233, 69, 96, 0.95);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            z-index: 10;
+            text-align: center;
+            width: 80%;
+        }
+
+        #point-banner.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Controles táctiles móviles */
+        .touch-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 10px;
+            padding: 0 10px;
+        }
+
+        .touch-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .touch-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+        }
+
+        .touch-btn:active {
+            background: #e94560;
+            border-color: #e94560;
+        }
+
+        /* Ventana emergente de la carta */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            color: #333;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            border: 4px solid #e94560;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            color: #e94560;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .modal-content p {
+            line-height: 1.6;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .close-btn {
+            display: block;
+            margin: 15px auto 0;
+            background: #0f3460;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls-panel">
+        <label for="bg-select">Fondo:</label>
+        <select id="bg-select">
+            <option value="stadium">Estadio Profesional</option>
+            <option value="beach">Playa Atardecer</option>
+            <option value="cyber">Pista Cyberpunk</option>
+            <option value="custom">🖼️ Subir imagen...</option>
+        </select>
+        <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
+        <button id="open-letter-btn">Ver Carta ✉️</button>
+    </div>
+
+    <div id="game-container">
+        <div id="point-banner">¡PUNTO! 🏐</div>
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+    </div>
+
+    <!-- Controles táctiles en pantalla -->
+    <div class="touch-controls">
+        <div class="touch-group">
+            <button class="touch-btn" id="btn-left">◀</button>
+            <button class="touch-btn" id="btn-right">▶</button>
+        </div>
+        <button class="touch-btn" id="btn-jump">▲</button>
+    </div>
+
+    <!-- Carta de Disculpa -->
+    <div class="modal" id="letter-modal">
+        <div class="modal-content">
+            <h2>🏐 Para mi querida Sofi 🏐</h2>
+            <p>Hola Sofi👋,</p>
+            <p>no se mucho de voley,pero si se que a veces en la vida, igual que en un partido de voleibol, cometemos errores de comunicación, calculamos mal un movimiento o dejamos caer la pelota cuando debíamos estar ahí para dar la mejor recepción.</p>
+            <p>Quiero pedirte disculpas de corazón si te hice sentir mal o por el error que cometí, se que estuvo mal y prometo mejorar y echarle ganitas sofi 💪.Ningún equipo funciona si no hay confianza y apoyo mutuo, y tú eres alguien muy importante con quien siempre quiero coordinar el mejor juego y quiero estar siempre para ti sofi, a como de lugar y mientras tu me lo permitas, yo no puedo permitirme abandonarte jamás de los jamases sofii!.</p>
+            <p>Dame la oportunidad de hacer un buen compañero para que juntos volvamos a rematar bien alto. ¡Prometo dar mi 100%!. si te tomaste el tiempo de leer mi carta, gracias sofi de corazon, tienes un lugar muy especial en mi corazón y mi lealtad total</p>
+            <button class="close-btn" id="restart-btn">Reiniciar Partido 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgSelect = document.getElementById('bg-select');
+        const bgFileInput = document.getElementById('bg-file-input');
+        const pointBanner = document.getElementById('point-banner');
+        const modal = document.getElementById('letter-modal');
+        const openLetterBtn = document.getElementById('open-letter-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const gravity = 0.35;
+        const netWidth = 10;
+        const netHeight = 160;
+        const maxScore = 5;
+        
+        let scorePlayer = 0;
+        let scoreCPU = 0;
+        let isScoring = false;
+        let gameOver = false;
+        let customBgImage = null;
+
+        const player = {
+            x: 150, y: 300, radius: 30, color: '#e94560',
+            vx: 0, vy: 0, speed: 5, jumpPower: -9.5, isGrounded: false, eyeOffset: 10
+        };
+
+        const cpu = {
+            x: 650, y: 300, radius: 30, color: '#0f3460',
+            vx: 0, vy: 0, speed: 4, jumpPower: -9.5, isGrounded: false, eyeOffset: -10
+        };
+
+        const ball = {
+            x: 200, y: 150, radius: 15, vx: 3, vy: 0, rotation: 0
+        };
+
+        // Estado de teclas y toque
+        const keys = { left: false, right: false, up: false };
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.up = true;
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.up = false;
+        });
+
+        // Controles táctiles
+        const setupTouch = (btnId, keyName) => {
+            const btn = document.getElementById(btnId);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+            btn.addEventListener('mousedown', () => keys[keyName] = true);
+            btn.addEventListener('mouseup', () => keys[keyName] = false);
+        };
+        setupTouch('btn-left', 'left');
+        setupTouch('btn-right', 'right');
+        setupTouch('btn-jump', 'up');
+
+        // Selección de imagen personalizada
+        bgSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') bgFileInput.click();
+        });
+
+        bgFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    customBgImage = new Image();
+                    customBgImage.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        openLetterBtn.onclick = () => modal.style.display = 'flex';
+        restartBtn.onclick = () => {
+            modal.style.display = 'none';
+            scorePlayer = 0;
+            scoreCPU = 0;
+            gameOver = false;
+            resetBall(true);
+        };
+
+        function resetBall(servingToPlayer = true) {
+            ball.x = servingToPlayer ? 200 : 600;
+            ball.y = 150;
+            ball.vx = servingToPlayer ? 2 : -2;
+            ball.vy = -3;
+            isScoring = false;
+        }
+
+        function triggerPoint(winner) {
+            isScoring = true;
+            if (winner === 'player') scorePlayer++;
+            else scoreCPU++;
+
+            if (scorePlayer >= maxScore || scoreCPU >= maxScore) {
+                gameOver = true;
+                pointBanner.innerText = winner === 'player' ? '¡VICTORIA! 🏆' : 'FIN DEL PARTIDO 🏐';
+                pointBanner.classList.add('show');
+                setTimeout(() => {
+                    pointBanner.classList.remove('show');
+                    modal.style.display = 'flex';
+                }, 1800);
+            } else {
+                pointBanner.innerText = winner === 'player' ? '¡Punto tuyo! 🏐' : '¡Punto Rival! 🏐';
+                pointBanner.classList.add('show');
+                setTimeout(() => {
+                    pointBanner.classList.remove('show');
+                    resetBall(winner === 'player');
+                }, 1400);
+            }
+        }
+
+        function update() {
+            if (isScoring || gameOver) return;
+
+            // Movimiento Jugador
+            if (keys.left) player.vx = -player.speed;
+            else if (keys.right) player.vx = player.speed;
+            else player.vx = 0;
+
+            if (keys.up && player.isGrounded) {
+                player.vy = player.jumpPower;
+                player.isGrounded = false;
+            }
+
+            player.x += player.vx;
+            player.vy += gravity;
+            player.y += player.vy;
+
+            if (player.x - player.radius < 0) player.x = player.radius;
+            if (player.x + player.radius > canvas.width / 2 - netWidth / 2) {
+                player.x = canvas.width / 2 - netWidth / 2 - player.radius;
+            }
+            if (player.y + player.radius > canvas.height - 30) {
+                player.y = canvas.height - 30 - player.radius;
+                player.vy = 0;
+                player.isGrounded = true;
+            }
+
+            // IA Rival
+            const targetX = ball.x > canvas.width / 2 ? ball.x : 650;
+            if (cpu.x < targetX - 10) cpu.vx = cpu.speed;
+            else if (cpu.x > targetX + 10) cpu.vx = -cpu.speed;
+            else cpu.vx = 0;
+
+            if (ball.x > canvas.width / 2 && ball.x > 500 && ball.y < 200 && cpu.isGrounded && Math.random() < 0.05) {
+                cpu.vy = cpu.jumpPower;
+                cpu.isGrounded = false;
+            }
+
+            cpu.x += cpu.vx;
+            cpu.vy += gravity;
+            cpu.y += cpu.vy;
+
+            if (cpu.x - cpu.radius < canvas.width / 2 + netWidth / 2) cpu.x = canvas.width / 2 + netWidth / 2 + cpu.radius;
+            if (cpu.x + cpu.radius > canvas.width) cpu.x = canvas.width - cpu.radius;
+            if (cpu.y + cpu.radius > canvas.height - 30) {
+                cpu.y = canvas.height - 30 - cpu.radius;
+                cpu.vy = 0;
+                cpu.isGrounded = true;
+            }
+
+            // Física Pelota
+            ball.vy += gravity * 0.7;
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.rotation += ball.vx * 0.05;
+
+            if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.vx *= -0.8; }
+            if (ball.x + ball.radius > canvas.width) { ball.x = canvas.width - ball.radius; ball.vx *= -0.8; }
+            if (ball.y - ball.radius < 0) { ball.y = ball.radius; ball.vy *= -0.8; }
+
+            const netX = canvas.width / 2 - netWidth / 2;
+            const netY = canvas.height - netHeight;
+            if (ball.x + ball.radius > netX && ball.x - ball.radius < netX + netWidth && ball.y + ball.radius > netY) {
+                ball.vx *= -0.8;
+                if (ball.x < canvas.width / 2) ball.x = netX - ball.radius;
+                else ball.x = netX + netWidth + ball.radius;
+            }
+
+            checkBallCollision(player);
+            checkBallCollision(cpu);
+
+            if (ball.y + ball.radius >= canvas.height - 30) {
+                if (ball.x < canvas.width / 2) triggerPoint('cpu');
+                else triggerPoint('player');
+            }
+        }
+
+        function checkBallCollision(p) {
+            let dx = ball.x - p.x;
+            let dy = ball.y - p.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < ball.radius + p.radius) {
+                let overlap = (ball.radius + p.radius) - distance;
+                let nx = dx / distance;
+                let ny = dy / distance;
+
+                ball.x += nx * overlap;
+                ball.y += ny * overlap;
+
+                let force = 8;
+                ball.vx = nx * force + p.vx * 0.5;
+                ball.vy = ny * force + p.vy * 0.3;
+                if (ball.vy > -3) ball.vy = -6;
+            }
+        }
+
+        function drawBackground() {
+            const bg = bgSelect.value;
+            if (bg === 'custom' && customBgImage) {
+                ctx.drawImage(customBgImage, 0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            } else if (bg === 'stadium') {
+                ctx.fillStyle = '#16213e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#d4a373';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            } else if (bg === 'beach') {
+                let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                grad.addColorStop(0, '#ff7e5f');
+                grad.addColorStop(1, '#feb47b');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#e9c46a';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            } else if (bg === 'cyber') {
+                ctx.fillStyle = '#050515';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#7b2cbf';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            }
+        }
+
+        function drawCharacter(p) {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(p.eyeOffset, -5, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            let angle = Math.atan2(ball.y - p.y, ball.x - p.x);
+            let pupilX = p.eyeOffset + Math.cos(angle) * 3;
+            let pupilY = -5 + Math.sin(angle) * 3;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(pupilX, pupilY, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawBall() {
+            ctx.save();
+            ctx.translate(ball.x, ball.y);
+            ctx.rotate(ball.rotation);
+            ctx.fillStyle = '#f8f9fa';
+            ctx.beginPath();
+            ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawNet() {
+            ctx.fillStyle = '#8d99ae';
+            ctx.fillRect(canvas.width / 2 - netWidth / 2, canvas.height - netHeight, netWidth, netHeight);
+        }
+
+        function drawScore() {
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(`Tú: ${scorePlayer}`, 40, 40);
+            ctx.fillText(`Rival: ${scoreCPU}`, canvas.width - 140, 40);
+        }
+
+        function gameLoop() {
+            update();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawNet();
+            drawCharacter(player);
+            drawCharacter(cpu);
+            drawBall();
+            drawScore();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

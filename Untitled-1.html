@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Sofía — Una Velada Inolvidable</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Great+Vibes&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-dark': '#1e0409',
+                        'rose-wine': '#4a0e17',
+                        'rose-accent': '#c92a42',
+                        'gold-light': '#f9e0ae',
+                        'gold-accent': '#d4af37',
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        cursive: ['Great Vibes', 'cursive'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0305;
+            color: #f3e5f5;
+            overflow-x: hidden;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Cinema bars */
+        .cinema-bar {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 7vh;
+            background-color: #000;
+            z-index: 50;
+            transition: height 0.5s ease;
+        }
+        .cinema-bar-top { top: 0; border-bottom: 1px solid rgba(212, 175, 55, 0.25); }
+        .cinema-bar-bottom { bottom: 0; border-top: 1px solid rgba(212, 175, 55, 0.25); }
+
+        /* Candle flickering effect */
+        @keyframes candleFlicker {
+            0%, 100% { opacity: 0.85; transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 140, 0, 0.6)); }
+            25% { opacity: 0.65; transform: scale(0.98); filter: drop-shadow(0 0 10px rgba(255, 120, 0, 0.4)); }
+            50% { opacity: 1; transform: scale(1.03); filter: drop-shadow(0 0 25px rgba(255, 160, 50, 0.8)); }
+            75% { opacity: 0.75; transform: scale(0.99); filter: drop-shadow(0 0 12px rgba(255, 130, 0, 0.5)); }
+        }
+        .candle-glow {
+            animation: candleFlicker 3s infinite ease-in-out;
+        }
+
+        /* Gold glowing pulses */
+        @keyframes goldPulse {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); }
+            50% { filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.8)); }
+        }
+        .gold-glow {
+            animation: goldPulse 3s infinite ease-in-out;
+        }
+
+        /* Rainbow Spin for Heart Ambient Glow */
+        @keyframes rainbowSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .rainbow-ring {
+            background: conic-gradient(from 0deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            animation: rainbowSpin 12s linear infinite;
+        }
+
+        /* Half Red Half White Heart Gradient fill */
+        .half-heart-fill {
+            fill: url(#halfRedHalfWhite);
+        }
+
+        /* Scenes layout */
+        .scene {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            transform: scale(0.96);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            padding: 5rem 1rem;
+        }
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .restaurant-bg {
+            background: radial-gradient(circle at 50% 50%, #2b0810 0%, #120306 60%, #050102 100%);
+        }
+
+        /* Shimmer effect for buttons */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .btn-shimmer {
+            background: linear-gradient(90deg, #c92a42 0%, #f9e0ae 50%, #c92a42 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+        }
+
+        /* Word search grid selection style */
+        .word-cell {
+            transition: all 0.2s ease;
+        }
+        .word-cell.selected {
+            background-color: #d4af37 !important;
+            color: #1e0409 !important;
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+        .word-cell.found {
+            background-color: #c92a42 !important;
+            color: #f9e0ae !important;
+            font-weight: bold;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 2, 4, 0.8); }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between bg-black">
+
+    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-10"></canvas>
+
+    <!-- SVG GRADIENTS DEFINITION -->
+    <svg class="absolute w-0 h-0 opacity-0 pointer-events-none">
+        <defs>
+            <linearGradient id="halfRedHalfWhite" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="50%" stop-color="#dc2626" />
+                <stop offset="50%" stop-color="#ffffff" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- EVOLVING YELLOW ROSE COMPANION WIDGET (Top Right) -->
+    <div id="yellowRoseWidget" class="fixed top-16 right-4 z-40 bg-black/60 border border-gold-accent/40 rounded-2xl p-2.5 flex items-center gap-3 backdrop-blur-md shadow-2xl transition-all duration-500">
+        <div id="roseIconContainer" class="w-10 h-10 rounded-full bg-amber-500/20 border border-gold-accent flex items-center justify-center gold-glow">
+            <svg id="roseStageSvg" viewBox="0 0 100 100" class="w-7 h-7 text-gold-accent">
+                <!-- Dynamic SVG rendered via JS -->
+            </svg>
+        </div>
+        <div class="hidden sm:block text-left pr-2">
+            <span class="text-[10px] font-cinzel text-gold-accent block tracking-wider uppercase">Rosa Amarilla</span>
+            <span id="roseProgressText" class="text-[11px] font-sans text-rose-100 font-semibold">Semilla de Luz</span>
+        </div>
+    </div>
+
+    <!-- Top & Bottom Cinema Bars -->
+    <div class="cinema-bar cinema-bar-top flex items-center justify-between px-4 md:px-6">
+        <span class="text-xs font-cinzel text-gold-accent tracking-widest uppercase opacity-80">Para Mi Querida Sofía ❤️</span>
+        <div class="flex items-center gap-2">
+            <button id="audioToggleBtn" class="text-xs text-gold-light hover:text-white flex items-center gap-1.5 bg-black/50 px-3 py-1 rounded-full border border-gold-accent/40 transition hover:border-gold-accent">
+                <i data-lucide="music" class="w-3.5 h-3.5"></i> 
+                <span id="audioStatus">Música: Piano Romántico</span>
+            </button>
+        </div>
+    </div>
+    <div class="cinema-bar cinema-bar-bottom flex items-center justify-between px-6">
+        <span id="sceneIndicator" class="text-xs font-cinzel text-gold-accent/80 tracking-wider">Bienvenida linda</span>
+        <span class="text-xs font-sans text-pink-200/50 italic hidden sm:inline">Un detalle hecho con todo mi amor para ti princesa — Kevin</span>
+    </div>
+
+    <!-- Ambient Lighting Background -->
+    <div class="fixed inset-0 restaurant-bg opacity-90 pointer-events-none"></div>
+    
+    <!-- CENTRAL HEART WITH RAINBOW GLOW -->
+    <div class="fixed inset-0 pointer-events-none z-0 flex items-center justify-center">
+        <div class="relative flex items-center justify-center">
+            <!-- Rainbow Arc Ring -->
+            <div class="w-72 h-72 md:w-96 md:h-96 rounded-full rainbow-ring opacity-40 blur-2xl"></div>
+            <div class="w-64 h-64 md:w-80 md:h-80 rounded-full rainbow-ring p-1.5 shadow-2xl absolute opacity-70">
+                <div class="w-full h-full bg-black/80 rounded-full flex items-center justify-center"></div>
+            </div>
+            <!-- Half Red / Half White Glowing Heart in Center -->
+            <svg viewBox="0 0 24 24" class="w-32 h-32 md:w-44 md:h-44 absolute drop-shadow-[0_0_35px_rgba(220,38,38,0.7)] candle-glow">
+                <path class="half-heart-fill" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- MAIN SCENE CONTAINER -->
+    <main class="relative z-20 flex-1 flex items-center justify-center p-4">
+
+        <!-- ==================== ESCENA 0: INICIO ==================== -->
+        <section id="scene-0" class="scene active flex-col text-center max-w-2xl">
+            <div class="mb-6 inline-block p-4 rounded-full bg-rose-wine/30 border border-gold-accent/40 shadow-2xl candle-glow">
+                <i data-lucide="sparkles" class="w-12 h-12 text-gold-accent"></i>
+            </div>
+            <h1 class="font-cinzel text-3xl md:text-5xl font-bold text-gold-light mb-4 tracking-wider leading-tight">
+                Hola, Sofi...
+            </h1>
+            <p class="font-sans text-rose-100/90 text-sm md:text-base leading-relaxed mb-8 max-w-lg mx-auto">
+                Esta noche ha sido preparada con mucho cariño, dedicación y amor especialmente para ti.
+            </p>
+            <button onclick="startExperience()" class="group relative px-8 py-3.5 bg-gradient-to-r from-rose-wine via-rose-accent to-rose-wine rounded-full text-gold-light font-cinzel font-semibold tracking-widest text-sm shadow-xl hover:shadow-rose-900/60 transition-all duration-300 hover:scale-105 border border-gold-accent/50 flex items-center gap-3 mx-auto">
+                <span>ENTRAR A LA VELADA De Sofi</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </section>
+
+        <!-- ==================== ESCENA 1: MENÚ SOPA DE LETRAS ==================== -->
+        <section id="scene-1" class="scene flex-col text-center max-w-2xl w-full">
+            <div class="mb-1 text-gold-accent">
+                <i data-lucide="utensils-crossed" class="w-7 h-7 mx-auto"></i>
+            </div>
+            <span class="text-xs font-cinzel text-gold-accent tracking-widest uppercase mb-1">Paso 1: La Cena Especial</span>
+            <h2 class="font-cinzel text-2xl md:text-3xl text-white font-semibold mb-2">Sopa de Letras del Menú</h2>
+            <p class="text-xs text-rose-200/80 mb-3 max-w-md mx-auto">
+                Encuentra las 6 palabras románticas para desbloquear el menú completo(te lo puse facil jeje) y poder servir la cena:
+            </p>
+
+            <!-- Word Search Mini-Game UI -->
+            <div class="bg-black/80 border border-gold-accent/40 rounded-2xl p-3 md:p-4 mb-4 max-w-sm mx-auto shadow-2xl backdrop-blur-sm">
+                <!-- Target Words List -->
+                <div class="flex justify-center gap-1.5 flex-wrap mb-3 text-[10px] font-cinzel">
+                    <span id="target-SOFIA" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">SOFIA</span>
+                    <span id="target-AMOR" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">AMOR</span>
+                    <span id="target-ROSAS" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">ROSAS</span>
+                    <span id="target-DETALLE" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">DETALLE</span>
+                    <span id="target-TEAMO" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">TEAMO</span>
+                    <span id="target-JUNTOS" class="px-2 py-0.5 rounded bg-rose-wine/60 text-gold-light border border-gold-accent/30">JUNTOS</span>
+                </div>
+
+                <!-- Word Search Grid 10x10 -->
+                <div id="wordSearchGrid" class="grid grid-cols-10 gap-1 text-center font-mono text-xs md:text-sm select-none">
+                    <!-- Dynamic Grid Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Unlocked Dishes Indicators with Lasagna Photo -->
+            <div class="grid grid-cols-3 gap-2 w-full max-w-md mb-4 text-center">
+                <div id="dishCard-1" class="p-2 rounded-lg bg-black/60 border border-gold-accent/20 opacity-50 transition-all flex flex-col items-center">
+                    <span class="text-lg">🍩</span>
+                    <p class="text-[10px] font-cinzel text-gold-light font-bold">1. Buñuelos</p>
+                </div>
+                <div id="dishCard-2" class="p-2 rounded-lg bg-black/60 border border-gold-accent/20 opacity-50 transition-all flex flex-col items-center">
+                    <span class="text-lg">🍚</span>
+                    <p class="text-[10px] font-cinzel text-gold-light font-bold">2. Arroz con Atún</p>
+                </div>
+                <!-- LASAGNA WITH REAL PHOTO -->
+                <div id="dishCard-3" class="p-2 rounded-lg bg-black/60 border border-gold-accent/20 opacity-50 transition-all flex flex-col items-center overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=200&q=80" alt="Lasaña" class="w-8 h-8 object-cover rounded-md mb-0.5 border border-gold-accent/40">
+                    <p class="text-[10px] font-cinzel text-gold-light font-bold">3. Lasaña Casera</p>
+                </div>
+            </div>
+
+            <button id="btnScene1" disabled onclick="nextScene(2)" class="px-8 py-3 bg-rose-wine/40 border border-gold-accent/20 text-rose-300/50 rounded-full font-cinzel text-xs tracking-wider transition-all duration-300 flex items-center gap-2 mx-auto cursor-not-allowed">
+                <span>SERVIR LA CENA</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </section>
+
+        <!-- ==================== ESCENA 2: LABERINTO RAMO BUCHÓN ==================== -->
+        <section id="scene-2" class="scene flex-col text-center max-w-2xl w-full">
+            <span class="text-xs font-cinzel text-gold-accent tracking-widest uppercase mb-1">Paso 2: Sorpresa en Camino</span>
+            <h2 class="font-cinzel text-2xl md:text-3xl text-white font-semibold mb-2">Laberinto del Amors♥️🥺</h2>
+            <p class="text-xs text-rose-200/80 mb-4 max-w-md mx-auto">
+                Guía la chispa dorada <span class="text-gold-accent">🏐</span> hasta el regalo <span class="text-rose-accent">🎁</span> para entregar el Ramo Buchón a la hermosa reina Sofia:
+            </p>
+
+            <!-- Maze UI -->
+            <div class="relative bg-black/80 border-2 border-gold-accent/50 rounded-2xl p-3 max-w-xs mx-auto shadow-2xl mb-4">
+                <div id="mazeGrid" class="grid grid-cols-7 gap-1 w-full aspect-square">
+                    <!-- Dynamic Maze Rendered by JS -->
+                </div>
+
+                <!-- Touch / On-screen Controls -->
+                <div class="grid grid-cols-3 gap-1 w-36 mx-auto mt-3">
+                    <div></div>
+                    <button onclick="moveMazePlayer(0, -1)" class="p-2 bg-rose-wine/60 hover:bg-rose-wine border border-gold-accent/40 rounded-lg text-gold-light active:scale-95"><i data-lucide="chevron-up" class="w-4 h-4 mx-auto"></i></button>
+                    <div></div>
+                    <button onclick="moveMazePlayer(-1, 0)" class="p-2 bg-rose-wine/60 hover:bg-rose-wine border border-gold-accent/40 rounded-lg text-gold-light active:scale-95"><i data-lucide="chevron-left" class="w-4 h-4 mx-auto"></i></button>
+                    <button onclick="moveMazePlayer(0, 1)" class="p-2 bg-rose-wine/60 hover:bg-rose-wine border border-gold-accent/40 rounded-lg text-gold-light active:scale-95"><i data-lucide="chevron-down" class="w-4 h-4 mx-auto"></i></button>
+                    <button onclick="moveMazePlayer(1, 0)" class="p-2 bg-rose-wine/60 hover:bg-rose-wine border border-gold-accent/40 rounded-lg text-gold-light active:scale-95"><i data-lucide="chevron-right" class="w-4 h-4 mx-auto"></i></button>
+                </div>
+            </div>
+
+            <!-- Revealed Ramo Buchón Modal Display -->
+            <div id="ramoUnlocked" class="hidden transition-all duration-700 bg-black/80 border-2 border-gold-accent rounded-2xl p-4 max-w-sm mx-auto mb-4 gold-glow">
+                <div class="relative w-40 h-40 mx-auto">
+                    <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-2xl">
+                        <path d="M 40 160 L 100 190 L 160 160 L 180 80 L 20 80 Z" fill="url(#goldGrad)" stroke="#d4af37" stroke-width="2"/>
+                        <path d="M 80 150 Q 100 130 120 150 Q 100 170 80 150 Z" fill="#c92a42" stroke="#f9e0ae" stroke-width="1.5"/>
+                        <g>
+                            <circle cx="60" cy="75" r="16" fill="#80091d" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="90" cy="80" r="17" fill="#a80c26" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="120" cy="80" r="17" fill="#a80c26" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="145" cy="75" r="16" fill="#80091d" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="45" cy="55" r="16" fill="#a80c26" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="75" cy="55" r="18" fill="#c92a42" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="105" cy="50" r="19" fill="#e61c3b" stroke="#d4af37" stroke-width="1"/>
+                            <circle cx="135" cy="55" r="18" fill="#c92a42" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="160" cy="55" r="16" fill="#a80c26" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="65" cy="35" r="16" fill="#c92a42" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="95" cy="30" r="18" fill="#e61c3b" stroke="#d4af37" stroke-width="1"/>
+                            <circle cx="125" cy="30" r="18" fill="#e61c3b" stroke="#d4af37" stroke-width="1"/>
+                            <circle cx="150" cy="35" r="16" fill="#c92a42" stroke="#d4af37" stroke-width="0.8"/>
+                            <circle cx="85" cy="15" r="14" fill="#ff2e4d" stroke="#d4af37" stroke-width="1"/>
+                            <circle cx="110" cy="12" r="15" fill="#ff2e4d" stroke="#d4af37" stroke-width="1"/>
+                        </g>
+                        <path d="M 85 8 L 95 0 L 105 10 L 115 0 L 125 8 L 120 18 L 90 18 Z" fill="#f9e0ae" stroke="#d4af37" stroke-width="1"/>
+                        <defs>
+                            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#f9e0ae" />
+                                <stop offset="50%" stop-color="#d4af37" />
+                                <stop offset="100%" stop-color="#8a6d1c" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <p class="font-cinzel text-gold-light text-sm mt-2 font-semibold">¡Gran Ramo Buchón con Corona!</p>
+                <p class="text-[11px] text-rose-200/80 mt-1">Lleno de rosas rojas y destellos dorados para mi linda Sofía.</p>
+            </div>
+
+            <button id="btnScene2" disabled onclick="nextScene(3)" class="px-8 py-3 bg-rose-wine/40 border border-gold-accent/20 text-rose-300/50 rounded-full font-cinzel text-xs tracking-wider transition-all duration-300 flex items-center gap-2 mx-auto cursor-not-allowed">
+                <span>LEER LA CARTA ADJUNTA</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </section>
+
+        <!-- ==================== ESCENA 3: CARTA INTERACTIVA (TEXTO LEGIBLE CORREGIDO) ==================== -->
+        <section id="scene-3" class="scene flex-col text-center max-w-2xl w-full">
+            <span class="text-xs font-cinzel text-gold-accent tracking-widest uppercase mb-1">Paso 3: Mensaje del Corazón</span>
+            <h2 class="font-cinzel text-2xl md:text-3xl text-white font-semibold mb-4">Para mi linda Sofía</h2>
+
+            <!-- Envelope View -->
+            <div id="envelopeCard" class="bg-rose-wine/90 border-2 border-gold-accent p-8 rounded-2xl shadow-2xl relative w-full max-w-md mx-auto text-center">
+                <p class="text-xs font-sans text-rose-200/80 mb-6">Esta carta está sellada con cera dorada. Rompe el sello para leer la nota que Kevin te ha preparado querida Sofia:</p>
+
+                <button onclick="openLetterWithAnimation()" class="w-20 h-20 bg-rose-accent border-2 border-gold-light rounded-full mx-auto flex flex-col items-center justify-center shadow-2xl group hover:scale-110 transition-transform cursor-pointer candle-glow">
+                    <i data-lucide="heart" class="w-8 h-8 text-gold-light fill-rose-accent group-hover:scale-125 transition-transform"></i>
+                    <span class="text-[9px] font-cinzel text-gold-light mt-1 font-bold">ABRIR</span>
+                </button>
+            </div>
+
+            <!-- Letter Content Modal -->
+            <div id="letterModal" class="hidden bg-[#1a060b] border-2 border-gold-accent/80 rounded-2xl p-6 md:p-8 shadow-2xl text-left max-h-[65vh] overflow-y-auto w-full max-w-lg mx-auto relative">
+                <div class="text-center border-b border-gold-accent/30 pb-3 mb-4">
+                    <span class="font-cinzel text-2xl md:text-3xl text-gold-light font-bold tracking-wider">Mi Querida Sofi...</span>
+                </div>
+                <!-- FUENTE CAMBIADA A MONTSERRAT SANS-SERIF PARA MÁXIMA LEGIBILIDAD -->
+                <div class="font-sans text-sm md:text-base text-rose-100/90 leading-relaxed space-y-4 font-normal">
+                    <p>
+                        Desde que llegaste a mi vida y te conoci siento una conexion unica y especial que nunca habia sentido con nadie más, siento que cada instante a tu lado se ha vuelto inolvidable. Esta velada es solo una pequeña muestra de todo lo que significas para mí y del gran cariño que siento por ti, prometo que algun dia la tendremos en persona y sera aun mas especial.
+                    </p>
+                    <p>
+                        Tu y tu voz de angel ilumina mis días y tu forma de ser me parece maravillosa. No imagino a nadie más especial con quien compartir este camino que no sea contigo Sofia y es por eso que hoy te digo esto, quiero que me ames y que sientas por mi este bonito sentimiento que siento por ti llamado amor, que me permitas librar todas tus luchas, me dejes protegerte y cuidarte como mi pequeña niña y llenarnos de amor el uno al otro, vivir una etapa increible juntos y juntos ser felices cuidando el uno del otro...
+                    </p>
+                    <p class="text-right text-gold-light font-cinzel text-base md:text-lg font-bold pt-2">
+                        Con todo mi corazón, Kevin ❤️
+                    </p>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="nextScene(4)" class="px-8 py-3 bg-gradient-to-r from-rose-wine via-rose-accent to-rose-wine text-gold-light rounded-full font-cinzel text-xs font-semibold tracking-wider hover:scale-105 border border-gold-accent transition shadow-lg">
+                        CONTINUAR A LA PREGUNTA
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ESCENA 4: LA PETICIÓN ==================== -->
+        <section id="scene-4" class="scene flex-col text-center max-w-2xl w-full">
+            <div class="mb-4 inline-block p-4 rounded-full bg-rose-wine/40 border border-gold-accent/50 candle-glow">
+                <i data-lucide="heart-handshake" class="w-12 h-12 text-gold-accent"></i>
+            </div>
+
+            <span class="text-xs font-cinzel text-gold-accent tracking-widest uppercase mb-1">La Pregunta Especial que me tiene noches sin dormir</span>
+            <h2 class="font-cinzel text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                Sofía... <br>
+                <span class="text-gold-light font-cursive text-4xl md:text-6xl">¿Quieres ser mi novia?</span>
+            </h2>
+
+            <p id="proposalTip" class="text-xs font-sans text-rose-200/80 mb-8 min-h-[20px]">
+                Presiona el botón cuando estés lista... 😉
+            </p>
+
+            <div class="relative flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-md mx-auto min-h-[120px]">
+                <button id="yesBtn" onclick="openResponseModal()" class="w-full sm:w-auto px-10 py-4 btn-shimmer text-rose-dark font-cinzel font-bold text-base tracking-widest rounded-full shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center gap-2 border-2 border-gold-light">
+                    <i data-lucide="heart" class="w-5 h-5 fill-rose-dark"></i>
+                    <span>Dar mi respuesta</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== ESCENA 5: PANTALLA FINAL ==================== -->
+        <section id="scene-5" class="scene flex-col text-center max-w-3xl w-full">
+            <div class="mb-4 inline-block p-5 rounded-full bg-gradient-to-r from-rose-wine via-rose-accent to-rose-wine border-2 border-gold-accent gold-glow">
+                <i data-lucide="sparkles" class="w-14 h-14 text-gold-light animate-bounce"></i>
+            </div>
+
+            <h2 class="font-cursive text-4xl md:text-6xl text-gold-light mb-4">
+                ¡Gracias por compartir esta velada Sofi, la verdad si me tomo mucho trabajo asi que espero te guste, esta hecha con todo el amor que tengo por ti! ❤️
+            </h2>
+
+            <div class="bg-black/80 border border-gold-accent/50 backdrop-blur-md rounded-2xl p-6 md:p-8 max-w-lg mx-auto shadow-2xl mb-6 text-left space-y-4">
+                <p class="font-sans text-rose-100 text-sm md:text-base leading-relaxed">
+                    Sé que esta es una pregunta importante y no sé exactamente cuál será tu respuesta en este momento. 
+                </p>
+                <p class="font-sans text-gold-light text-sm md:text-base font-semibold leading-relaxed">
+                    Por favor, sé completamente honesta con lo que sientes. Si la respuesta es un sí, me harás el hombre más feliz del mundo; pero si no sientes lo mismo por mí, no te sientas mal ni presionada en lo absoluto. Lo entenderé perfectamente y seguiré valorando muchísimo todo de ti.
+                </p>
+                <div class="pt-3 border-t border-gold-accent/30 text-center">
+                    <p class="text-xs text-rose-200/90 italic mb-3">
+                        Envíame tu respuesta directamente por mensaje de WhatsApp o cuando hablemos:
+                    </p>
+                    <a href="https://wa.me/?text=Hola%20Kevin!%20Acabo%20de%20terminar%20el%20juego..." target="_blank" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 border border-emerald-400 text-white font-cinzel text-xs font-bold rounded-full transition hover:scale-105 shadow-lg">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar mi respuesta a Kevin por WhatsApp
+                    </a>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="restartExperience()" class="px-6 py-2.5 bg-rose-wine/60 hover:bg-rose-wine border border-gold-accent/40 text-rose-100 rounded-full font-cinzel text-xs tracking-wider transition flex items-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Revivir la experiencia
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODAL DE CONFIRMACIÓN ==================== -->
+    <div id="responseModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-[#180509] border-2 border-gold-accent rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative text-center">
+            <div class="w-16 h-16 bg-rose-wine border border-gold-accent rounded-full flex items-center justify-center mx-auto mb-4 gold-glow">
+                <i data-lucide="heart" class="w-8 h-8 text-gold-accent fill-rose-accent"></i>
+            </div>
+            <h3 class="font-cinzel text-xl text-gold-light font-bold mb-2">¡Llegamos al Final, SIUU!</h3>
+            <p class="text-xs text-rose-200/90 mb-6 leading-relaxed">
+                Gracias por completar cada paso de esta velada. Presiona el botón para ir al mensaje final.
+            </p>
+
+            <button onclick="acceptProposal()" class="w-full py-3 bg-gradient-to-r from-rose-wine via-rose-accent to-rose-wine border border-gold-accent text-gold-light rounded-full font-cinzel text-xs font-bold tracking-wider hover:scale-105 transition shadow-lg flex items-center justify-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>VER MENSAJE FINAL</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ==================== PARTICLE SYSTEM ==================== */
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const numParticles = 40;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 8 + 4;
+                this.speedY = Math.random() * 1.2 + 0.5;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.8;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 2;
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.isGold = Math.random() > 0.65;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.01) + this.speedX;
+                this.rotation += this.rotationSpeed;
+                if (this.y > canvas.height + 20) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                if (this.isGold) {
+                    ctx.fillStyle = '#d4af37';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#c92a42';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.bezierCurveTo(-this.size, -this.size, -this.size, this.size, 0, this.size * 1.5);
+                    ctx.bezierCurveTo(this.size, this.size, this.size, -this.size, 0, 0);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < numParticles; i++) particles.push(new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        /* ==================== YELLOW ROSE EVOLUTION SYSTEM ==================== */
+        const roseStages = [
+            {
+                text: "Semilla de Luz",
+                svg: `<circle cx="50" cy="50" r="14" fill="#f59e0b" class="animate-pulse"/><circle cx="50" cy="50" r="8" fill="#fef08a"/>`
+            },
+            {
+                text: "Brote de Amor",
+                svg: `<path d="M50 75 Q45 50 50 35 Q55 50 50 75 Z" fill="#84cc16"/><circle cx="50" cy="35" r="12" fill="#eab308"/><circle cx="50" cy="35" r="7" fill="#fef08a"/>`
+            },
+            {
+                text: "Capullo en Flor",
+                svg: `<path d="M50 80 L50 45" stroke="#65a30d" stroke-width="4"/><path d="M50 55 Q35 40 45 25 Q55 35 50 55 Z" fill="#eab308"/><path d="M50 55 Q65 40 55 25 Q45 35 50 55 Z" fill="#facc15"/><circle cx="50" cy="30" r="8" fill="#fef08a"/>`
+            },
+            {
+                text: "Flor de Oro",
+                svg: `<path d="M50 85 L50 45" stroke="#65a30d" stroke-width="4"/><circle cx="35" cy="35" r="12" fill="#f59e0b"/><circle cx="65" cy="35" r="12" fill="#f59e0b"/><circle cx="50" cy="22" r="12" fill="#facc15"/><circle cx="50" cy="48" r="12" fill="#facc15"/><circle cx="50" cy="35" r="14" fill="#fef08a"/><circle cx="50" cy="35" r="6" fill="#d97706"/>`
+            },
+            {
+                text: "¡Rosa Amarilla Radiante!",
+                svg: `<g class="gold-glow"><path d="M50 90 L50 45" stroke="#65a30d" stroke-width="5"/><path d="M50 65 Q30 55 35 45" stroke="#65a30d" stroke-width="3" fill="none"/><path d="M50 75 Q70 65 65 55" stroke="#65a30d" stroke-width="3" fill="none"/><circle cx="30" cy="35" r="15" fill="#f59e0b"/><circle cx="70" cy="35" r="15" fill="#f59e0b"/><circle cx="50" cy="18" r="15" fill="#facc15"/><circle cx="50" cy="52" r="15" fill="#facc15"/><circle cx="50" cy="35" r="17" fill="#fef08a"/><circle cx="50" cy="35" r="8" fill="#b45309"/></g>`
+            }
+        ];
+
+        function updateRoseStage(stageIndex) {
+            const idx = Math.min(stageIndex, roseStages.length - 1);
+            document.getElementById('roseStageSvg').innerHTML = roseStages[idx].svg;
+            document.getElementById('roseProgressText').innerText = roseStages[idx].text;
+            
+            const widget = document.getElementById('yellowRoseWidget');
+            widget.classList.add('scale-110');
+            setTimeout(() => widget.classList.remove('scale-110'), 300);
+        }
+
+        /* ==================== WEB AUDIO API ROMANTIC MUSIC ==================== */
+        let audioCtx = null;
+        let isAudioPlaying = false;
+        let melodyInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        const romanticNotes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+
+        function playRomanticNote(freq, duration = 2.0) {
+            if (!audioCtx || !isAudioPlaying) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function startMusic() {
+            initAudio();
+            isAudioPlaying = true;
+            if (melodyInterval) clearInterval(melodyInterval);
+
+            document.getElementById('audioStatus').innerText = "Música: Piano Romántico";
+            let step = 0;
+            melodyInterval = setInterval(() => {
+                if (!isAudioPlaying) return;
+                const note = romanticNotes[step % romanticNotes.length];
+                playRomanticNote(note, 2.5);
+                step++;
+            }, 1200);
+        }
+
+        function toggleAudio() {
+            if (!isAudioPlaying) {
+                startMusic();
+            } else {
+                isAudioPlaying = false;
+                document.getElementById('audioStatus').innerText = "Música: Off";
+                if (melodyInterval) clearInterval(melodyInterval);
+            }
+        }
+        document.getElementById('audioToggleBtn').addEventListener('click', toggleAudio);
+
+        /* ==================== SCENE NAVIGATION ==================== */
+        let currentScene = 0;
+        const sceneTitles = [
+            "Bienvenida",
+            "Escena I — Sopa de Letras",
+            "Escena II — Laberinto del Amor",
+            "Escena III — La Carta",
+            "Escena IV — La Pregunta",
+            "Mensaje Final ❤️"
+        ];
+
+        function showScene(sNum) {
+            document.querySelectorAll('.scene').forEach(sc => sc.classList.remove('active'));
+            const target = document.getElementById(`scene-${sNum}`);
+            if (target) target.classList.add('active');
+            currentScene = sNum;
+            document.getElementById('sceneIndicator').innerText = sceneTitles[sNum] || "";
+            updateRoseStage(sNum);
+        }
+
+        function startExperience() {
+            startMusic();
+            nextScene(1);
+        }
+
+        function nextScene(target) {
+            showScene(target);
+            if (isAudioPlaying) playRomanticNote(523.25, 1.5);
+        }
+
+        /* ==================== SCENE 1: WORD SEARCH MINIGAME ==================== */
+        const wordGridLetters = [
+            ['S', 'O', 'F', 'I', 'A', 'X', 'Y', 'Z', 'W', 'Q'],
+            ['A', 'M', 'O', 'R', 'K', 'P', 'U', 'U', 'N', 'A'],
+            ['R', 'O', 'S', 'A', 'S', 'N', 'N', 'L', 'S', 'J'],
+            ['D', 'E', 'T', 'A', 'L', 'L', 'E', 'K', 'T', 'H'],
+            ['J', 'U', 'N', 'T', 'O', 'S', 'U', 'H', 'E', 'G'],
+            ['T', 'E', 'A', 'M', 'O', 'C', 'V', 'B', 'N', 'M'],
+            ['A', 'T', 'U', 'N', 'D', 'O', 'S', 'F', 'D', 'E'],
+            ['B', 'U', 'Ñ', 'U', 'E', 'L', 'O', 'S', 'C', 'D'],
+            ['P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y'],
+            ['Z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        ];
+
+        const targetWords = ["SOFIA", "AMOR", "ROSAS", "DETALLE", "TEAMO", "JUNTOS"];
+        const foundWords = new Set();
+        let selectedSequence = [];
+
+        function initWordSearch() {
+            const gridContainer = document.getElementById('wordSearchGrid');
+            gridContainer.innerHTML = '';
+            selectedSequence = [];
+
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const char = wordGridLetters[r][c];
+                    const cell = document.createElement('div');
+                    cell.className = 'word-cell p-1.5 md:p-2 bg-rose-wine/40 border border-gold-accent/30 rounded text-gold-light cursor-pointer hover:bg-gold-accent hover:text-black font-bold text-center';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.innerText = char;
+                    cell.onclick = () => handleCellClick(cell, char);
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(cell, char) {
+            if (cell.classList.contains('found')) return;
+
+            if (cell.classList.contains('selected')) {
+                cell.classList.remove('selected');
+                selectedSequence = selectedSequence.filter(item => item.cell !== cell);
+            } else {
+                cell.classList.add('selected');
+                selectedSequence.push({ cell, char });
+            }
+
+            const currentStr = selectedSequence.map(i => i.char).join('');
+            
+            targetWords.forEach(word => {
+                if ((currentStr === word || currentStr.split('').reverse().join('') === word) && !foundWords.has(word)) {
+                    foundWords.add(word);
+                    selectedSequence.forEach(item => {
+                        item.cell.classList.remove('selected');
+                        item.cell.classList.add('found');
+                    });
+                    selectedSequence = [];
+                    
+                    const targetBadge = document.getElementById(`target-${word}`);
+                    if (targetBadge) {
+                        targetBadge.className = 'px-2 py-0.5 rounded bg-emerald-700 text-white font-bold border border-emerald-400';
+                    }
+
+                    checkWordSearchProgress();
+                    playRomanticNote(659.25, 1.5);
+                }
+            });
+        }
+
+        function checkWordSearchProgress() {
+            const count = foundWords.size;
+            if (count >= 2) document.getElementById('dishCard-1').classList.remove('opacity-50', 'bg-black/60');
+            if (count >= 4) document.getElementById('dishCard-2').classList.remove('opacity-50', 'bg-black/60');
+            if (count >= 6) {
+                document.getElementById('dishCard-3').classList.remove('opacity-50', 'bg-black/60');
+                
+                const btn = document.getElementById('btnScene1');
+                btn.disabled = false;
+                btn.classList.remove('bg-rose-wine/40', 'text-rose-300/50', 'cursor-not-allowed');
+                btn.classList.add('bg-rose-accent', 'text-gold-light', 'hover:scale-105', 'border-gold-accent');
+            }
+        }
+
+        /* ==================== SCENE 2: MAZE MINIGAME ==================== */
+        const mazeLayout = [
+            [2, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0],
+            [0, 1, 1, 0, 0, 0, 0],
+            [0, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 1, 1, 3]
+        ];
+
+        let playerPos = { x: 0, y: 0 };
+
+        function initMaze() {
+            const mazeContainer = document.getElementById('mazeGrid');
+            mazeContainer.innerHTML = '';
+
+            for (let y = 0; y < 7; y++) {
+                for (let x = 0; x < 7; x++) {
+                    const type = mazeLayout[y][x];
+                    const tile = document.createElement('div');
+                    tile.id = `maze-${x}-${y}`;
+                    tile.className = 'rounded flex items-center justify-center text-xs font-bold transition-all ';
+
+                    if (type === 1) {
+                        tile.className += 'bg-rose-wine/80 border border-rose-accent/40';
+                    } else {
+                        tile.className += 'bg-black/40 border border-gold-accent/20';
+                    }
+
+                    if (type === 3) tile.innerText = '🎁';
+                    mazeContainer.appendChild(tile);
+                }
+            }
+            renderMazePlayer();
+        }
+
+        function renderMazePlayer() {
+            document.querySelectorAll('#mazeGrid div').forEach(d => {
+                if (d.innerText === '🟡') d.innerText = '';
+            });
+            const currentTile = document.getElementById(`maze-${playerPos.x}-${playerPos.y}`);
+            if (currentTile) currentTile.innerText = '🟡';
+        }
+
+        function moveMazePlayer(dx, dy) {
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+
+            if (newX >= 0 && newX < 7 && newY >= 0 && newY < 7) {
+                if (mazeLayout[newY][newX] !== 1) {
+                    playerPos.x = newX;
+                    playerPos.y = newY;
+                    renderMazePlayer();
+                    playRomanticNote(440, 0.5);
+
+                    if (mazeLayout[newY][newX] === 3) {
+                        document.getElementById('ramoUnlocked').classList.remove('hidden');
+                        const btn = document.getElementById('btnScene2');
+                        btn.disabled = false;
+                        btn.classList.remove('bg-rose-wine/40', 'text-rose-300/50', 'cursor-not-allowed');
+                        btn.classList.add('bg-rose-accent', 'text-gold-light', 'hover:scale-105', 'border-gold-accent');
+                        playRomanticNote(783.99, 1.5);
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (currentScene === 2) {
+                if (e.key === 'ArrowUp') moveMazePlayer(0, -1);
+                if (e.key === 'ArrowDown') moveMazePlayer(0, 1);
+                if (e.key === 'ArrowLeft') moveMazePlayer(-1, 0);
+                if (e.key === 'ArrowRight') moveMazePlayer(1, 0);
+            }
+        });
+
+        /* ==================== SCENE 3: CARTA INTERACTIVA ==================== */
+        function openLetterWithAnimation() {
+            document.getElementById('envelopeCard').classList.add('hidden');
+            document.getElementById('letterModal').classList.remove('hidden');
+            if (isAudioPlaying) playRomanticNote(523.25, 1.0);
+        }
+
+        /* ==================== RESPONSE MODAL & SUBMISSION ==================== */
+        function openResponseModal() {
+            document.getElementById('responseModal').classList.remove('hidden');
+        }
+
+        function acceptProposal() {
+            document.getElementById('responseModal').classList.add('hidden');
+            nextScene(5);
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 140,
+                    spread: 90,
+                    origin: { y: 0.6 },
+                    colors: ['#c92a42', '#d4af37', '#f9e0ae', '#ffffff']
+                });
+
+                setTimeout(() => {
+                    confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
+                    confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
+                }, 400);
+            }
+
+            if (isAudioPlaying) {
+                playRomanticNote(523.25, 1.0);
+                setTimeout(() => playRomanticNote(659.25, 1.0), 200);
+                setTimeout(() => playRomanticNote(783.99, 1.5), 400);
+            }
+        }
+
+        function restartExperience() {
+            foundWords.clear();
+            playerPos = { x: 0, y: 0 };
+
+            document.getElementById('envelopeCard').classList.remove('hidden');
+            document.getElementById('letterModal').classList.add('hidden');
+
+            initWordSearch();
+            initMaze();
+            showScene(1);
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            initWordSearch();
+            initMaze();
+            updateRoseStage(0);
+        };
+    </script>
+</body>
+</html>
